@@ -1,52 +1,272 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Luke.ai</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luke-ai</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            background: #0d0d0d; 
-            color: #e0e0e0; 
-            font-family: -apple-system, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+            background: #050505; 
+            color: #00d4ff; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            height: 100vh; 
+            margin: 0; 
+            overflow: hidden;
+            position: relative;
         }
-        .header { 
-            background: #1a1a1a; 
-            padding: 1rem; 
-            border-bottom: 1px solid #333;
-            display: flex;
-            gap: 10px;
-            align-items: center;
+
+        /* Animated Stars Background */
+        #stars-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            opacity: 0.7;
         }
-        .header h1 { color: #00d4aa; font-size: 1.2rem; }
-        #keyInput { 
-            flex: 1;
-            background: #0d0d0d;
-            border: 1px solid #444;
-            color: #fff;
-            padding: 8px;
-            border-radius: 4px;
+
+        /* Sidebar Styles */
+        #sidebar { 
+            width: 260px; 
+            background: rgba(10, 10, 10, 0.95); 
+            border-right: 1px solid #222; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 15px; 
+            z-index: 10;
         }
-        #keyStatus { color: #666; font-size: 0.8rem; margin-left: 10px; }
-        #chat { 
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            max-width: 800px;
-            width: 100%;
-            margin: 0 auto;
+        .sidebar-item { padding: 10px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 0.9rem; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid transparent; }
+        .sidebar-item:hover { background: #1a1a1a; border-color: #00d4ff; color: #fff; }
+        .sidebar-header { font-weight: bold; color: #00d4ff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; font-size: 0.8rem; }
+
+        /* Main Content */
+        #main-content { 
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            position: relative; 
+            z-index: 1;
         }
-        .msg { 
-            margin: 10px 0; 
-            padding: 12px 16px; 
-            border-radius: 12px;
-            max-width: 80%;
-            line-height: 1.5;
-            white-space: pre-wrap;
+        .back-btn { position: absolute; top: 15px; left: 15px; background: rgba(0, 0, 0, 0.8); border: 1px solid #00d4ff; color: #00d4ff; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-size: 0.7rem; font-weight: bold; z-index: 9999; transition: 0.3s; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
+        .back-btn:hover { background: #00d4ff; color: #000; box-shadow: 0 0 15px #00d4ff; }
+        
+        h1 { margin-top: 20px; text-transform: uppercase; letter-spacing: 5px; text-shadow: 0 0 10px #00d4ff; font-size: 1.5rem; }
+        
+        #chat-container { 
+            width: 95%; max-width: 800px; height: 70vh; 
+            background: rgba(15, 15, 15, 0.95); 
+            border: 1px solid #333; 
+            border-radius: 20px; 
+            margin-top: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 0 10px 50px rgba(0,0,0,1);
+            z-index: 2;
         }
-        .user { 
-            background: #00d4aa; 
-            color: #000; 
-            margin
+        #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 80%; padding: 14px 18px; border-radius: 18px; line-height: 1.5; font-size: 0.95rem; word-wrap: break-word; }
+        .user-msg { align-self: flex-end; background: #00d4ff; color: #000; font-weight: 600; border-bottom-right-radius: 2px; }
+        .ai-msg { align-self: flex-start; background: #1a1a1a; color: #fff; border: 1px solid #00d4ff; border-bottom-left-radius: 2px; }
+        .msg img { max-width: 100%; border-radius: 10px; margin-top: 10px; border: 1px solid #00d4ff; }
+
+        .input-area { 
+            display: flex; 
+            padding: 20px; 
+            background: #0a0a0a; 
+            gap: 12px; 
+            border-top: 1px solid #222; 
+            align-items: center; 
+        }
+        .controls { display: flex; gap: 10px; margin-bottom: 10px; width: 95%; max-width: 800px; }
+        input[type="text"] { flex-grow: 1; background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 12px; outline: none; }
+        input:focus { border-color: #00d4ff; }
+
+        button { background: #111; border: 1px solid #333; padding: 10px 15px; border-radius: 10px; color: #00d4ff; cursor: pointer; transition: 0.3s; font-size: 0.8rem; }
+        button:hover { background: #00d4ff; color: #000; }
+        #sendBtn { background: #00d4ff; color: #000; font-weight: bold; border: none; }
+    </style>
+</head>
+<body>
+    <canvas id="stars-canvas"></canvas>
+
+    <div id="sidebar">
+        <div class="sidebar-header">Chat History</div>
+        <button onclick="newChat()"><i class="fa-solid fa-plus"></i> New Chat</button>
+        <div id="history-list" style="flex-grow: 1; overflow-y: auto; margin-top: 15px;"></div>
+        <button onclick="clearAllHistory()" style="color: #ff4444; border-color: #442222;"><i class="fa-solid fa-trash"></i> Clear All</button>
+    </div>
+
+    <div id="main-content">
+        <a href="home.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> HUB</a>
+        <h1><i class="fa-solid fa-brain"></i> Luke-ai</h1>
+
+        <div class="controls">
+            <select id="provider" onchange="updateEndpoint()" style="background:#111; color:#00d4ff; border:1px solid #333; padding:8px; border-radius:8px;">
+                <option value="groq">Groq</option>
+                <option value="openai">OpenAI</option>
+                <option value="together">Together.ai</option>
+                <option value="openrouter">OpenRouter</option>
+            </select>
+            <button onclick="manualSave()"><i class="fa-solid fa-floppy-disk"></i> Save Chat</button>
+            <button id="toggleAutoSave" onclick="toggleAutoSave()">Auto-Save: ON</button>
+        </div>
+
+        <div id="chat-container">
+            <div id="messages">
+                <div class="msg ai-msg" id="intro-msg">Luke-ai online. Awaiting identification.</div>
+            </div>
+            <div class="input-area">
+                <input type="file" id="fileInput" accept="image/*" onchange="handleFileUpload()">
+                <label for="fileInput" class="upload-label"><i class="fa-solid fa-paperclip"></i></label>
+                <input type="text" id="userInput" placeholder="Ask Luke-ai..." onkeydown="if(event.key==='Enter') sendMessage()">
+                <button id="sendBtn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let API_KEY = "";
+        let userStatus = localStorage.getItem("luke_user_status") || "unknown";
+        let chatHistory = [];
+        let autoSave = true;
+        let currentChatId = null;
+
+        // Provider config
+        const providers = {
+            groq: { base: "https://api.groq.com/openai/v1", model: "llama-3.3-70b-versatile" },
+            openai: { base: "https://api.openai.com/v1", model: "gpt-4o-mini" },
+            together: { base: "https://api.together.xyz/v1", model: "meta-llama/Llama-3.3-70B-Instruct-Turbo" },
+            openrouter: { base: "https://openrouter.ai/api/v1", model: "anthropic/claude-3.5-sonnet" }
+        };
+
+        let currentProvider = "groq";
+
+        window.onload = () => {
+            loadSidebar();
+            createStars();
+            const intro = document.getElementById('intro-msg');
+            if (userStatus === "luke") intro.innerText = "Welcome back, Luke. Standing on business, BOIII.";
+            else if (userStatus === "jhoey") intro.innerText = "Greetings, Jhoey. Systems active.";
+            else if (userStatus === "barry") intro.innerText = "Barry, Pavilion Legend. Respect the bounce.";
+            else if (userStatus === "random") intro.innerText = "Guest detected. Access granted.";
+        };
+
+        function createStars() {
+            const canvas = document.getElementById('stars-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const stars = [];
+            for (let i = 0; i < 800; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2.2,
+                    speed: Math.random() * 0.015 + 0.005
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#ffffff";
+
+                stars.forEach(star => {
+                    ctx.globalAlpha = Math.random() * 0.8 + 0.4;
+                    ctx.fillRect(star.x, star.y, star.size, star.size);
+                    star.y += star.speed;
+                    if (star.y > canvas.height) star.y = 0;
+                });
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        function updateEndpoint() {
+            currentProvider = document.getElementById('provider').value;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+
+            if (!API_KEY) {
+                API_KEY = prompt("Enter your API Key:");
+                if (!API_KEY) return;
+            }
+
+            // Secret commands
+            if (text === "boi boi its me") { 
+                userStatus = "luke"; 
+                localStorage.setItem("luke_user_status", "luke"); 
+                location.reload(); 
+                return; 
+            }
+            if (text === "RANDOM") { 
+                userStatus = "random"; 
+                localStorage.setItem("luke_user_status", "random"); 
+                location.reload(); 
+                return; 
+            }
+
+            addMessage(text, 'user-msg');
+            chatHistory.push({ role: "user", content: text });
+
+            const config = providers[currentProvider];
+
+            try {
+                const response = await fetch(`${config.base}/chat/completions`, {
+                    method: "POST",
+                    headers: { 
+                        "Authorization": `Bearer ${API_KEY}`, 
+                        "Content-Type": "application/json",
+                        ...(currentProvider === "openrouter" && { "HTTP-Referer": "https://luke.ai" })
+                    },
+                    body: JSON.stringify({
+                        model: config.model,
+                        messages: [
+                            { 
+                                role: "system", 
+                                content: `You are Luke-ai. Status: ${userStatus}. Use slang (BOIII, cracked, business). Keep responses extremely short (1-2 sentences max). Do not yap.` 
+                            },
+                            ...chatHistory
+                        ]
+                    })
+                });
+
+                const data = await response.json();
+                const aiResponse = data.choices[0].message.content;
+                addMessage(aiResponse, 'ai-msg');
+                chatHistory.push({ role: "assistant", content: aiResponse });
+                
+                if (autoSave) manualSave();
+            } catch (e) {
+                addMessage("Bro why you lie'n thats the wrong key BOIII.", 'ai-msg');
+            }
+        }
+
+        // Rest of your functions (same as before)
+        function handleFileUpload() { /* ... same as your original */ }
+        function addMessage(text, type, imgSrc = null) { /* ... same */ }
+        function manualSave() { /* ... same */ }
+        function loadSidebar() { /* ... same */ }
+        function loadChat(id) { /* ... same */ }
+        function newChat() { /* ... same */ }
+        function clearAllHistory() { /* ... same */ }
+        function toggleAutoSave() {
+            autoSave = !autoSave;
+            document.getElementById('toggleAutoSave').innerText = `Auto-Save: ${autoSave ? 'ON' : 'OFF'}`;
+        }
+    </script>
+</body>
+</html>
